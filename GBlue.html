@@ -1,0 +1,758 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello,GBlue</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%232563eb%22%3E%3Cpath%20d%3D%22M8%200C3.58%200%200%203.58%200%208c0%203.54%202.29%206.53%205.47%207.59.4.07.55-.17.55-.38%200-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01%201.08.58%201.23.82.72%201.21%201.87.87%202.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95%200-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12%200%200%20.67-.21%202.2.82.64-.18%201.32-.27%202-.27.68%200%201.36.09%202%20.27%201.53-1.04%202.2-.82%202.2-.82.44%201.1.16%201.92.08%202.12.51.56.82%201.27.82%202.15%200%203.07-1.87%203.75-3.65%203.95.29.25.54.73.54%201.48%200%201.07-.01%201.93-.01%202.2%200%20.21.15.46.55.38A8.013%208.013%200%200016%208c0-4.42-3.58-8-8-8z%22/%3E%3C/svg%3E" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8fbff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .hidden { display: none !important; }
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        /* 动画效果 */
+        .message-enter {
+            animation: messageSlide 0.3s ease-out;
+        }
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+            margin: 0 2px;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        /* 下拉动画 */
+        .dropdown-enter {
+            animation: dropdownFade 0.2s ease-out;
+        }
+        @keyframes dropdownFade {
+            from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        /* 文件上传拖拽高亮 */
+        .drag-over {
+            background-color: #eff6ff !important;
+            border-color: #3b82f6 !important;
+        }
+        /* 快捷提示hover效果 */
+        .suggestion-card:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div class="flex h-full">
+        <!-- 侧边栏 -->
+        <aside id="sidebar" class="w-64 bg-gray-900 text-white flex flex-col transition-all duration-300">
+            <!-- 新对话按钮 -->
+            <div class="p-3">
+                <button id="newChatBtn" class="w-full flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-700 hover:bg-blue-900 transition-all">
+                    <i class="fa fa-plus"></i>
+                    <span>新对话</span>
+                </button>
+            </div>
+
+            <!-- 历史对话 -->
+            <div class="flex-1 overflow-y-auto px-3 pb-3">
+                <div class="text-xs text-blue-300 px-2 py-2 uppercase tracking-wider">历史对话</div>
+                <div id="historyList" class="space-y-1"></div>
+            </div>
+
+            <!-- 底部设置 -->
+            <div class="p-3 border-t border-gray-800">
+                <div class="flex items-center gap-3">
+                    <button id="apiSettingsBtn" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-900 transition-all" title="API设置">
+                        <i class="fa fa-cog text-blue-300"></i>
+                    </button>
+                    <span class="text-xs text-blue-300">开源AI模型支持，仅学习，目前测试中</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主聊天区域 -->
+        <main class="flex-1 flex flex-col bg-white">
+            <!-- 顶部栏 -->
+            <header class="h-14 border-b border-blue-200 flex items-center justify-between px-6">
+                <div class="flex items-center gap-4">
+                    <button id="toggleSidebarBtn" class="text-gray-500 hover:text-gray-700 transition-all">
+                        <i class="fa fa-bars text-lg"></i>
+                    </button>
+                    <!-- 模型选择 -->
+                    <div class="relative">
+                        <button id="modelSelectTrigger" class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all">
+                            <span id="currentModelName" class="text-sm font-medium text-gray-700">MiniMax M2.7</span>
+                            <i id="modelSelectArrow" class="fa fa-chevron-down text-xs text-gray-500 transition-transform duration-200"></i>
+                        </button>
+                        <!-- 模型下拉面板 -->
+                        <div id="modelDropdownPanel" class="hidden absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-blue-200 py-1 z-50 dropdown-enter">
+                            <div class="px-3 py-2 text-xs text-gray-500 border-b border-blue-100">选择模型</div>
+                            <div id="modelOptionsList" class="py-1"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500">喵~这里是GBlue，很高兴见到你！</div>
+            </header>
+
+            <!-- 聊天消息区域 -->
+            <div id="chatContainer" class="flex-1 overflow-y-auto p-6">
+                <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center max-w-3xl mx-auto">
+                    <h1 class="text-3xl font-semibold text-gray-800 mb-8">有什么可以帮您的？</h1>
+                    <p class="text-gray-500 mb-8 text-center max-w-xl">
+                        上传文件、粘贴代码或直接提问，AI可以帮您处理文档、编写代码、回答问题，修改后的文件支持直接下载。<br>
+                        <span class="text-sm text-blue-300">AI 生成的内容仅供参考，请核实重要信息。支持上传图片、文档、代码等文件。</span>
+                    </p>
+                    <!-- 快捷提示 -->
+                    <div class="grid grid-cols-2 gap-3 w-full max-w-2xl mb-8">
+                        <button class="suggestion-card p-4 border border-blue-200 rounded-lg text-left transition-all" data-prompt="帮我写一份Python爬虫代码，爬取网页标题和内容">
+                            <div class="text-gray-800 font-medium mb-1">编写爬虫代码</div>
+                            <div class="text-sm text-gray-500">Python实现网页内容爬取</div>
+                        </button>
+                        <button class="suggestion-card p-4 border border-blue-200 rounded-lg text-left transition-all" data-prompt="帮我整理一份季度工作总结模板，包含工作内容、成果、不足和计划">
+                            <div class="text-gray-800 font-medium mb-1">工作总结模板</div>
+                            <div class="text-sm text-gray-500">通用季度/年度工作汇报框架</div>
+                        </button>
+                        <button class="suggestion-card p-4 border border-blue-200 rounded-lg text-left transition-all" data-prompt="帮我解释一下什么是大语言模型，用通俗易懂的语言">
+                            <div class="text-gray-800 font-medium mb-1">AI知识科普</div>
+                            <div class="text-sm text-gray-500">通俗易懂讲解大模型原理</div>
+                        </button>
+                        <button class="suggestion-card p-4 border border-blue-200 rounded-lg text-left transition-all" data-prompt="帮我把这段文字翻译成英文：你好，欢迎使用免费AI对话工具">
+                            <div class="text-gray-800 font-medium mb-1">中英翻译</div>
+                            <div class="text-sm text-gray-500">快速完成中英文互译</div>
+                        </button>
+                    </div>
+                    <p class="text-xs text-blue-300">支持拖拽文件到窗口上传 · 支持图片、文档、代码等格式</p>
+                </div>
+                <div id="messagesList" class="max-w-3xl mx-auto space-y-6 hidden"></div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="border-t border-blue-200 p-4">
+                <div class="max-w-3xl mx-auto">
+                    <!-- 文件预览区域 -->
+                    <div id="filePreviewArea" class="hidden mb-3 flex flex-wrap gap-2"></div>
+                    <!-- 拖拽上传遮罩 -->
+                    <div id="dropOverlay" class="hidden fixed inset-0 bg-blue-50/90 z-50 flex items-center justify-center border-2 border-dashed border-blue-400 rounded-lg m-4">
+                        <div class="text-center">
+                            <i class="fa fa-cloud-upload text-5xl text-blue-500 mb-4"></i>
+                            <p class="text-xl text-blue-600 font-medium">释放文件以上传</p>
+                            <p class="text-sm text-blue-500 mt-2">支持图片、代码、Excel、Word、PPT、WPS等文件（不含GIF动图）</p>
+                        </div>
+                    </div>
+                    <!-- 输入框 -->
+                    <div class="relative border border-gray-300 rounded-xl shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all" id="inputContainer">
+                        <textarea 
+                            id="messageInput" 
+                            rows="1" 
+                            placeholder="输入消息...（Shift+Enter换行，Enter发送）"
+                            class="w-full resize-none px-4 py-3 pr-24 rounded-xl focus:outline-none max-h-48"
+                        ></textarea>
+                        <div class="absolute right-2 bottom-2 flex items-center gap-2">
+                            <button id="uploadBtn" class="w-8 h-8 flex items-center justify-center rounded-full text-blue-300 hover:bg-blue-50 hover:text-gray-600 transition-all" title="上传文件">
+                                <i class="fa fa-paperclip"></i>
+                            </button>
+                            <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.py,.js,.html,.css,.java,.cpp,.json,.csv">
+                            <button id="sendBtn" class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed" disabled title="发送消息">
+                                <i class="fa fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-center text-blue-300 mt-2">AI 生成内容仅供参考，请核实重要信息</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- API设置弹窗 -->
+    <div id="apiSettingsModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">DMXAPI 设置</h3>
+                <button id="closeSettingsBtn" class="text-blue-300 hover:text-gray-600">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">API 密钥</label>
+                    <input type="password" id="dmxapiKeyInput" placeholder="输入你的DMXAPI密钥" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">
+                        密钥可前往 <a href="https://www.dmxapi.cn" target="_blank" class="text-blue-500 hover:underline">DMXAPI官网</a> 免费注册获取，所有模型永久免费无调用上限
+                    </p>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-lg text-sm text-blue-700">
+                    <i class="fa fa-info-circle mr-1"></i>
+                    密钥仅保存在你本地浏览器中，不会上传到任何服务器，隐私安全
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="cancelSettingsBtn" class="px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg transition-all">取消</button>
+                <button id="saveSettingsBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 配置信息 ==========
+        const API_ENDPOINT = 'https://www.dmxapi.cn/v1/chat/completions';
+        const MODEL_LIST = [
+            { id: 'minimax-m2.7-free', name: 'MiniMax M2.7' },
+            { id: 'doubao-pro-4k-free', name: '豆包Pro 4K' },
+            { id: 'glm-4-flash', name: '智谱GLM-4-Flash' },
+            { id: 'qwen-turbo-free', name: '通义千问Turbo' }
+        ];
+
+        // ========== 状态管理 ==========
+        let state = {
+            currentModel: localStorage.getItem('dmxapi_selected_model') || MODEL_LIST[0].id,
+            apiKey: localStorage.getItem('dmxapi_key') || '',
+            conversations: JSON.parse(localStorage.getItem('dmxapi_conversations') || '[]'),
+            currentConversationId: localStorage.getItem('dmxapi_current_conversation') || null,
+            uploadedFiles: [],
+            isSending: false
+        };
+
+        // ========== DOM元素 ==========
+        const dom = {
+            sidebar: document.getElementById('sidebar'),
+            toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
+            newChatBtn: document.getElementById('newChatBtn'),
+            historyList: document.getElementById('historyList'),
+            apiSettingsBtn: document.getElementById('apiSettingsBtn'),
+            modelSelectTrigger: document.getElementById('modelSelectTrigger'),
+            modelSelectArrow: document.getElementById('modelSelectArrow'),
+            modelDropdownPanel: document.getElementById('modelDropdownPanel'),
+            modelOptionsList: document.getElementById('modelOptionsList'),
+            currentModelName: document.getElementById('currentModelName'),
+            chatContainer: document.getElementById('chatContainer'),
+            welcomeScreen: document.getElementById('welcomeScreen'),
+            messagesList: document.getElementById('messagesList'),
+            messageInput: document.getElementById('messageInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            uploadBtn: document.getElementById('uploadBtn'),
+            fileInput: document.getElementById('fileInput'),
+            filePreviewArea: document.getElementById('filePreviewArea'),
+            dropOverlay: document.getElementById('dropOverlay'),
+            inputContainer: document.getElementById('inputContainer'),
+            apiSettingsModal: document.getElementById('apiSettingsModal'),
+            dmxapiKeyInput: document.getElementById('dmxapiKeyInput'),
+            closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+            cancelSettingsBtn: document.getElementById('cancelSettingsBtn'),
+            saveSettingsBtn: document.getElementById('saveSettingsBtn')
+        };
+
+        // ========== 初始化 ==========
+        function init() {
+            // 初始化模型显示
+            updateCurrentModelDisplay();
+            renderModelOptions();
+            
+            // 填充API密钥
+            dom.dmxapiKeyInput.value = state.apiKey;
+            
+            // 渲染历史对话
+            renderHistoryList();
+            
+            // 加载当前对话
+            if (state.currentConversationId) {
+                loadConversation(state.currentConversationId);
+            }
+            
+            // 绑定事件
+            bindEvents();
+            
+            // 自动调整输入框高度
+            autoResizeTextarea();
+        }
+
+        // ========== 事件绑定 ==========
+        function bindEvents() {
+            // 侧边栏切换
+            dom.toggleSidebarBtn.addEventListener('click', toggleSidebar);
+            
+            // 新对话
+            dom.newChatBtn.addEventListener('click', createNewConversation);
+            
+            // 模型选择
+            dom.modelSelectTrigger.addEventListener('click', toggleModelDropdown);
+            
+            // 点击外部关闭下拉
+            document.addEventListener('click', (e) => {
+                if (!dom.modelSelectTrigger.contains(e.target) && !dom.modelDropdownPanel.contains(e.target)) {
+                    closeModelDropdown();
+                }
+            });
+            
+            // API设置
+            dom.apiSettingsBtn.addEventListener('click', openSettingsModal);
+            dom.closeSettingsBtn.addEventListener('click', closeSettingsModal);
+            dom.cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+            dom.saveSettingsBtn.addEventListener('click', saveApiSettings);
+            
+            // 输入框事件
+            dom.messageInput.addEventListener('input', () => {
+                autoResizeTextarea();
+                updateSendButtonState();
+            });
+            dom.messageInput.addEventListener('keydown', handleInputKeydown);
+            
+            // 发送消息
+            dom.sendBtn.addEventListener('click', sendMessage);
+            
+            // 文件上传
+            dom.uploadBtn.addEventListener('click', () => dom.fileInput.click());
+            dom.fileInput.addEventListener('change', handleFileSelect);
+            
+            // 拖拽上传
+            document.addEventListener('dragenter', handleDragEnter);
+            document.addEventListener('dragover', handleDragOver);
+            document.addEventListener('dragleave', handleDragLeave);
+            document.addEventListener('drop', handleFileDrop);
+            
+            // 快捷提示点击
+            document.querySelectorAll('.suggestion-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const prompt = card.dataset.prompt;
+                    dom.messageInput.value = prompt;
+                    autoResizeTextarea();
+                    updateSendButtonState();
+                    dom.messageInput.focus();
+                });
+            });
+        }
+
+        // ========== 模型相关功能 ==========
+        function updateCurrentModelDisplay() {
+            const model = MODEL_LIST.find(m => m.id === state.currentModel) || MODEL_LIST[0];
+            dom.currentModelName.textContent = model.name;
+        }
+
+        function renderModelOptions() {
+            dom.modelOptionsList.innerHTML = '';
+            MODEL_LIST.forEach(model => {
+                const isSelected = model.id === state.currentModel;
+                const option = document.createElement('button');
+                option.className = 'w-full px-3 py-2 flex items-center justify-between hover:bg-blue-50 transition-all';
+                option.innerHTML = `
+                    <span class="text-sm text-gray-700">${model.name}</span>
+                    ${isSelected ? '<i class="fa fa-check text-blue-500 text-xs"></i>' : ''}
+                `;
+                option.addEventListener('click', () => {
+                    selectModel(model.id);
+                });
+                dom.modelOptionsList.appendChild(option);
+            });
+        }
+
+        function toggleModelDropdown() {
+            dom.modelDropdownPanel.classList.toggle('hidden');
+            dom.modelSelectArrow.classList.toggle('rotate-180');
+        }
+
+        function closeModelDropdown() {
+            dom.modelDropdownPanel.classList.add('hidden');
+            dom.modelSelectArrow.classList.remove('rotate-180');
+        }
+
+        function selectModel(modelId) {
+            state.currentModel = modelId;
+            localStorage.setItem('dmxapi_selected_model', modelId);
+            updateCurrentModelDisplay();
+            renderModelOptions();
+            closeModelDropdown();
+        }
+
+        // ========== API设置功能 ==========
+        function openSettingsModal() {
+            dom.dmxapiKeyInput.value = state.apiKey;
+            dom.apiSettingsModal.classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            dom.apiSettingsModal.classList.add('hidden');
+        }
+
+        function saveApiSettings() {
+            state.apiKey = dom.dmxapiKeyInput.value.trim();
+            localStorage.setItem('dmxapi_key', state.apiKey);
+            closeSettingsModal();
+            showToast('设置已保存');
+        }
+
+        // ========== 侧边栏功能 ==========
+        function toggleSidebar() {
+            dom.sidebar.classList.toggle('w-64');
+            dom.sidebar.classList.toggle('w-0');
+            dom.sidebar.classList.toggle('overflow-hidden');
+        }
+
+        // ========== 历史对话功能 ==========
+        function renderHistoryList() {
+            dom.historyList.innerHTML = '';
+            if (state.conversations.length === 0) {
+                dom.historyList.innerHTML = '<div class="text-xs text-gray-500 px-2 py-2">暂无历史对话</div>';
+                return;
+            }
+            // 按时间倒序
+            const sortedConversations = [...state.conversations].sort((a, b) => b.updateTime - a.updateTime);
+            sortedConversations.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = `group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-blue-900 transition-all ${conv.id === state.currentConversationId ? 'bg-blue-900' : ''}`;
+                item.innerHTML = `
+                    <i class="fa fa-comment-o text-blue-300 text-sm"></i>
+                    <span class="flex-1 text-sm truncate">${conv.title || '新对话'}</span>
+                    <button class="delete-conv-btn hidden group-hover:block text-blue-300 hover:text-red-400" data-id="${conv.id}">
+                        <i class="fa fa-trash-o text-xs"></i>
+                    </button>
+                `;
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-conv-btn')) return;
+                    loadConversation(conv.id);
+                });
+                item.querySelector('.delete-conv-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteConversation(conv.id);
+                });
+                dom.historyList.appendChild(item);
+            });
+        }
+
+        function createNewConversation() {
+            state.currentConversationId = null;
+            state.uploadedFiles = [];
+            renderFilePreview();
+            dom.messagesList.innerHTML = '';
+            dom.welcomeScreen.classList.remove('hidden');
+            dom.messagesList.classList.add('hidden');
+            dom.messageInput.value = '';
+            autoResizeTextarea();
+            updateSendButtonState();
+            renderHistoryList();
+            localStorage.removeItem('dmxapi_current_conversation');
+        }
+
+        function loadConversation(convId) {
+            const conv = state.conversations.find(c => c.id === convId);
+            if (!conv) return;
+            state.currentConversationId = convId;
+            localStorage.setItem('dmxapi_current_conversation', convId);
+            state.uploadedFiles = [];
+            renderFilePreview();
+            
+            // 渲染消息
+            dom.welcomeScreen.classList.add('hidden');
+            dom.messagesList.classList.remove('hidden');
+            dom.messagesList.innerHTML = '';
+            conv.messages.forEach(msg => renderMessage(msg.role, msg.content));
+            scrollToBottom();
+            renderHistoryList();
+        }
+
+        function saveCurrentConversation() {
+            if (!state.currentConversationId) {
+                // 创建新对话
+                const newConv = {
+                    id: Date.now().toString(),
+                    title: dom.messageInput.value.slice(0, 20) || '新对话',
+                    messages: [],
+                    createTime: Date.now(),
+                    updateTime: Date.now()
+                };
+                state.conversations.push(newConv);
+                state.currentConversationId = newConv.id;
+                localStorage.setItem('dmxapi_current_conversation', newConv.id);
+            }
+            const conv = state.conversations.find(c => c.id === state.currentConversationId);
+            if (conv) {
+                conv.updateTime = Date.now();
+                localStorage.setItem('dmxapi_conversations', JSON.stringify(state.conversations));
+                renderHistoryList();
+            }
+        }
+
+        function deleteConversation(convId) {
+            state.conversations = state.conversations.filter(c => c.id !== convId);
+            if (state.currentConversationId === convId) {
+                createNewConversation();
+            }
+            localStorage.setItem('dmxapi_conversations', JSON.stringify(state.conversations));
+            renderHistoryList();
+            showToast('对话已删除');
+        }
+
+        // ========== 消息功能 ==========
+        function renderMessage(role, content) {
+            const isUser = role === 'user';
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message-enter flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`;
+            msgDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}">
+                    <i class="fa ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+                </div>
+                <div class="max-w-[80%]">
+                    <div class="px-4 py-3 rounded-2xl ${isUser ? 'bg-blue-500 text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}">
+                        <div class="whitespace-pre-wrap">${content}</div>
+                    </div>
+                </div>
+            `;
+            dom.messagesList.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function renderTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'message-enter flex gap-3';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-gray-700">
+                    <i class="fa fa-robot"></i>
+                </div>
+                <div class="px-4 py-3 rounded-2xl bg-gray-100 rounded-tl-none">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+            dom.messagesList.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        async function sendMessage() {
+            const content = dom.messageInput.value.trim();
+            if (!content || state.isSending) return;
+            if (!state.apiKey) {
+                showToast('请先在设置中填写DMXAPI密钥', 'error');
+                openSettingsModal();
+                return;
+            }
+
+            state.isSending = true;
+            updateSendButtonState();
+            
+            // 隐藏欢迎页
+            dom.welcomeScreen.classList.add('hidden');
+            dom.messagesList.classList.remove('hidden');
+            
+            // 渲染用户消息
+            renderMessage('user', content);
+            
+            // 保存到对话
+            if (!state.currentConversationId) {
+                saveCurrentConversation();
+            }
+            const conv = state.conversations.find(c => c.id === state.currentConversationId);
+            conv.messages.push({ role: 'user', content });
+            
+            // 清空输入框
+            dom.messageInput.value = '';
+            autoResizeTextarea();
+            updateSendButtonState();
+            
+            // 显示打字指示器
+            renderTypingIndicator();
+
+            try {
+                // 构建消息历史
+                const messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
+                
+                // 调用DMXAPI
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: state.currentModel,
+                        messages: messages,
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || '请求失败，请检查API密钥是否正确');
+                }
+
+                const data = await response.json();
+                const aiReply = data.choices[0].message.content;
+                
+                // 移除打字指示器
+                removeTypingIndicator();
+                
+                // 渲染AI回复
+                renderMessage('assistant', aiReply);
+                
+                // 保存到对话
+                conv.messages.push({ role: 'assistant', content: aiReply });
+                saveCurrentConversation();
+
+            } catch (error) {
+                removeTypingIndicator();
+                renderMessage('assistant', `请求出错：${error.message}\n\n请检查：\n1. API密钥是否正确\n2. 网络是否正常\n3. 模型名称是否支持`);
+                conv.messages.push({ role: 'assistant', content: `请求出错：${error.message}` });
+                saveCurrentConversation();
+            } finally {
+                state.isSending = false;
+                updateSendButtonState();
+            }
+        }
+
+        // ========== 文件上传功能 ==========
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+            e.target.value = '';
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dom.dropOverlay.classList.remove('hidden');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+                dom.dropOverlay.classList.add('hidden');
+            }
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dom.dropOverlay.classList.add('hidden');
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files);
+        }
+
+        function addFiles(files) {
+            files.forEach(file => {
+                // 限制文件大小10MB
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast(`文件 ${file.name} 超过10MB，无法上传`, 'error');
+                    return;
+                }
+                state.uploadedFiles.push(file);
+            });
+            renderFilePreview();
+            updateSendButtonState();
+        }
+
+        function renderFilePreview() {
+            if (state.uploadedFiles.length === 0) {
+                dom.filePreviewArea.classList.add('hidden');
+                dom.filePreviewArea.innerHTML = '';
+                return;
+            }
+            dom.filePreviewArea.classList.remove('hidden');
+            dom.filePreviewArea.innerHTML = '';
+            state.uploadedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 text-sm';
+                fileItem.innerHTML = `
+                    <i class="fa ${getFileIcon(file.type)} text-gray-500"></i>
+                    <span class="max-w-[200px] truncate">${file.name}</span>
+                    <button class="text-blue-300 hover:text-red-500 ml-1" data-index="${index}">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                fileItem.querySelector('button').addEventListener('click', () => {
+                    state.uploadedFiles.splice(index, 1);
+                    renderFilePreview();
+                    updateSendButtonState();
+                });
+                dom.filePreviewArea.appendChild(fileItem);
+            });
+        }
+
+        function getFileIcon(type) {
+            if (type.startsWith('image/')) return 'fa-file-image-o';
+            if (type.includes('pdf')) return 'fa-file-pdf-o';
+            if (type.includes('word') || type.includes('doc')) return 'fa-file-word-o';
+            if (type.includes('excel') || type.includes('sheet')) return 'fa-file-excel-o';
+            if (type.includes('powerpoint') || type.includes('presentation')) return 'fa-file-powerpoint-o';
+            if (type.includes('zip') || type.includes('rar')) return 'fa-file-archive-o';
+            if (type.includes('text') || type.includes('code')) return 'fa-file-code-o';
+            return 'fa-file-o';
+        }
+
+        // ========== 工具函数 ==========
+        function autoResizeTextarea() {
+            dom.messageInput.style.height = 'auto';
+            dom.messageInput.style.height = Math.min(dom.messageInput.scrollHeight, 192) + 'px';
+        }
+
+        function updateSendButtonState() {
+            const hasContent = dom.messageInput.value.trim().length > 0;
+            dom.sendBtn.disabled = !hasContent || state.isSending;
+        }
+
+        function handleInputKeydown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function scrollToBottom() {
+            dom.chatContainer.scrollTop = dom.chatContainer.scrollHeight;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 text-white ${type === 'error' ? 'bg-blue-800' : 'bg-blue-500'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
