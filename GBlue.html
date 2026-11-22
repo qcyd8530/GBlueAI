@@ -1,0 +1,1225 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello，GBlue</title>
+    <!-- 蓝色Octocat favicon（GitHub黑猫黑色部分改为品牌蓝#165DFF） -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23165DFF'><path d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z'/></svg>">
+    <script src="https://cdn.tailwindcss.com">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#F5F7FA',
+                        'gray-light': '#E5E6EB',
+                        'gray-medium': '#86909C',
+                        'gray-dark': '#4E5969',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#F5F7FA',
+                        dark: '#1D2129',
+                        'gray-light': '#E5E6EB',
+                        'gray-medium': '#86909C',
+                        'gray-dark': '#4E5969'
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    
+        // 确保DOM完全加载后再初始化应用
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init(); // DOM已经加载完成直接初始化
+        }
+
+// ========== API密钥自动配置逻辑 ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // 自动加载本地存储的API密钥
+  const savedQwenKey = localStorage.getItem('qwen_api_key') || '';
+  const savedDeepseekKey = localStorage.getItem('deepseek_api_key') || '';
+
+  // 更新全局API配置
+  if (typeof API_CONFIG !== 'undefined') {
+    API_CONFIG.qwen = savedQwenKey;
+    API_CONFIG.deepseek = savedDeepseekKey;
+  }
+
+  // 获取DOM元素
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  const apiSettingsModal = document.getElementById('apiSettingsModal');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const qwenApiKeyInput = document.getElementById('qwenApiKeyInput');
+  const deepseekApiKeyInput = document.getElementById('deepseekApiKeyInput');
+
+  // 填充已保存的密钥到输入框
+  if (qwenApiKeyInput) qwenApiKeyInput.value = savedQwenKey;
+  if (deepseekApiKeyInput) deepseekApiKeyInput.value = savedDeepseekKey;
+
+  // 模态框开关逻辑
+  if (apiSettingsBtn && apiSettingsModal) {
+    apiSettingsBtn.addEventListener('click', () => {
+      apiSettingsModal.classList.remove('hidden');
+      apiSettingsModal.classList.add('flex');
+    });
+  }
+  if (closeSettingsBtn && apiSettingsModal) {
+    closeSettingsBtn.addEventListener('click', () => {
+      apiSettingsModal.classList.add('hidden');
+      apiSettingsModal.classList.remove('flex');
+    });
+  }
+  if (apiSettingsModal) {
+    apiSettingsModal.addEventListener('click', (e) => {
+      if (e.target === apiSettingsModal) {
+        apiSettingsModal.classList.add('hidden');
+        apiSettingsModal.classList.remove('flex');
+      }
+    });
+  }
+
+  // 实时保存密钥到本地存储
+  if (qwenApiKeyInput) {
+    qwenApiKeyInput.addEventListener('input', () => {
+      const key = qwenApiKeyInput.value.trim();
+      if (typeof API_CONFIG !== 'undefined') API_CONFIG.qwen = key;
+      localStorage.setItem('qwen_api_key', key);
+    });
+  }
+  if (deepseekApiKeyInput) {
+    deepseekApiKeyInput.addEventListener('input', () => {
+      const key = deepseekApiKeyInput.value.trim();
+      if (typeof API_CONFIG !== 'undefined') API_CONFIG.deepseek = key;
+      localStorage.setItem('deepseek_api_key', key);
+    });
+  }
+});
+
+</script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-thin {
+                scrollbar-width: thin;
+            }
+            .scrollbar-thin::-webkit-scrollbar {
+                width: 6px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb {
+                background: #C9CDD4;
+                border-radius: 3px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+                background: #86909C;
+            }
+            .hover-delete:hover .delete-btn {
+                opacity: 1;
+            }
+            .delete-btn {
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+        }
+    
+        /* 补全模型下拉必要工具类 */
+        .hidden { display: none !important; }
+        .scale-95 { transform: scale(0.95); }
+        .scale-100 { transform: scale(1); }
+        .opacity-0 { opacity: 0; }
+        .opacity-100 { opacity: 1; }
+        .origin-top { transform-origin: top center; }
+        .rotate-180 { transform: rotate(180deg); }
+</style>
+</head>
+<body class="bg-white h-screen flex overflow-hidden font-sans text-dark">
+    <!-- 侧边栏 -->
+    <aside class="w-64 bg-white border-r border-gray-light flex flex-col h-full shrink-0 overflow-visible">
+        <!-- 新对话按钮 -->
+        <div class="p-4">
+            <button id="newChatBtn" class="w-full bg-primary hover:bg-primary/90 text-white py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors">
+                <i class="fa fa-plus"></i>
+                <span>新对话</span>
+            </button>
+        </div>
+
+                <!-- 模型选择 -->
+        <div class="px-4 mb-4">
+            <label class="block text-sm text-gray-dark mb-2 font-medium">选择模型</label>
+            <div class="relative z-50" id="modelSelectWrapper" style="overflow: visible;">
+                <!-- 触发按钮 -->
+                <button type="button" id="modelSelectTrigger" class="w-full px-3.5 py-2.5 bg-secondary rounded-xl border border-gray-light hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 flex items-center justify-between text-left shadow-sm hover:shadow">
+                    <span class="text-sm font-medium" id="selectedModelName">360问AI</span>
+                    <i class="fa fa-chevron-down text-xs text-gray-400 transition-transform duration-200" id="modelDropdownArrow"></i>
+                </button>
+                <!-- 下拉面板 -->
+                <div class="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-gray-light py-1.5 z-50 hidden origin-top scale-95 opacity-0 transition-all duration-200" id="modelDropdownPanel" style="z-index: 999999; position: absolute;">
+                    <div class="model-option px-3.5 py-2.5 text-sm hover:bg-primary/5 cursor-pointer flex items-center justify-between transition-colors rounded-lg mx-1" data-value="360gpt-pro">
+                        <span>360问AI</span>
+                        <i class="fa fa-check text-primary text-xs opacity-100 selected-check"></i>
+                    </div>
+                    <div class="model-option px-3.5 py-2.5 text-sm hover:bg-primary/5 cursor-pointer flex items-center justify-between transition-colors rounded-lg mx-1" data-value="qwen2-7b">
+                        <span>通义千问</span>
+                        <i class="fa fa-check text-primary text-xs opacity-0 selected-check"></i>
+                    </div>
+                    <div class="model-option px-3.5 py-2.5 text-sm hover:bg-primary/5 cursor-pointer flex items-center justify-between transition-colors rounded-lg mx-1" data-value="deepseek-chat">
+                        <span>DeepSeek</span>
+                        <i class="fa fa-check text-primary text-xs opacity-0 selected-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                </button>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 flex flex-col h-full bg-white relative">
+        <!-- 消息区域 -->
+        <div id="messagesContainer" class="flex-1 overflow-y-auto scrollbar-thin">
+            <!-- 欢迎界面（无消息时显示） -->
+            <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center px-4 py-8">
+                <h2 class="text-2xl font-semibold text-dark mb-3">有什么可以帮您的？</h2>
+                <p class="text-gray-medium text-center max-w-lg mb-8">上传文件、粘贴代码或直接提问，AI可以帮您处理文档、编写代码、回答问题，修改后的文件支持直接下载。</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl w-full mb-8">
+                    <button class="quick-prompt p-3 bg-secondary hover:bg-secondary/70 rounded-xl text-sm text-gray-dark transition-colors text-left">
+                        <i class="fa fa-file-text-o text-primary mr-2"></i>
+                        帮我写周报
+                    </button>
+                    <button class="quick-prompt p-3 bg-secondary hover:bg-secondary/70 rounded-xl text-sm text-gray-dark transition-colors text-left">
+                        <i class="fa fa-code text-primary mr-2"></i>
+                        解释代码
+                    </button>
+                    <button class="quick-prompt p-3 bg-secondary hover:bg-secondary/70 rounded-xl text-sm text-gray-dark transition-colors text-left">
+                        <i class="fa fa-language text-primary mr-2"></i>
+                        翻译文档
+                    </button>
+                    <button class="quick-prompt p-3 bg-secondary hover:bg-secondary/70 rounded-xl text-sm text-gray-dark transition-colors text-left">
+                        <i class="fa fa-table text-primary mr-2"></i>
+                        处理表格
+                    </button>
+                </div>
+                
+                <p class="text-xs text-gray-medium">AI 生成的内容仅供参考，请核实重要信息。支持上传图片、文档、代码等文件。</p>
+                <p class="text-xs text-gray-medium mt-1">支持拖拽文件到窗口上传 · 支持图片、文档、代码等格式</p>
+            </div>
+
+            <!-- 消息列表（有消息时显示） -->
+            <div id="messagesList" class="max-w-4xl mx-auto px-4 py-6 space-y-6 hidden">
+                <!-- 消息动态生成 -->
+            </div>
+        </div>
+
+        <!-- 输入区域（参考ai.so.com简洁样式，仅保留+号、输入框、发送按钮） -->
+        <div class="border-t border-gray-light px-4 py-4 bg-white">
+            <div class="max-w-4xl mx-auto">
+                <div id="uploadPreview" class="mb-3 hidden">
+                    <!-- 上传文件预览区 -->
+                    <div class="flex flex-wrap gap-2 mb-2" id="fileList"></div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-secondary rounded-2xl p-2 border border-transparent focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                    <!-- +号上传按钮 -->
+                    <button id="uploadBtn" class="w-9 h-9 flex items-center justify-center text-gray-medium hover:text-primary hover:bg-white rounded-xl transition-colors shrink-0" title="上传文件">
+                        <i class="fa fa-plus"></i>
+                    </button>
+                    <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.txt,.js,.ts,.py,.java,.cpp,.c,.html,.css,.json,.md,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.wps,.et,.dps">
+                    
+                    <!-- 输入框 -->
+                    <textarea id="messageInput" rows="1" placeholder="给AI发送消息..." class="flex-1 bg-transparent resize-none border-none outline-none py-2 px-1 text-dark placeholder:text-gray-medium max-h-32 overflow-y-auto scrollbar-thin leading-5"></textarea>
+                    
+                    <!-- 发送按钮 -->
+                    <button id="sendBtn" class="w-9 h-9 flex items-center justify-center text-gray-medium hover:text-primary hover:bg-white rounded-xl transition-colors shrink-0 disabled:text-gray-300 disabled:hover:bg-transparent" disabled title="发送">
+                        <i class="fa fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 拖拽上传覆盖层 -->
+        <div id="dropOverlay" class="absolute inset-0 bg-primary/5 border-2 border-dashed border-primary rounded-xl z-10 hidden items-center justify-center flex-col">
+            <i class="fa fa-cloud-upload text-primary text-5xl mb-4"></i>
+            <p class="text-primary text-xl font-medium">释放文件以上传</p>
+            <p class="text-gray-medium mt-2">支持图片、代码、Excel、Word、PPT、WPS等文件（不含GIF动图）</p>
+        </div>
+    </main>
+
+    <script>
+        // 全局状态
+        let conversations = [];
+        let currentConversationId = null;
+        let uploadedFiles = [];
+        const STORAGE_KEY = 'gblue_ai_conversations';
+
+        // DOM元素
+        const newChatBtn = document.getElementById('newChatBtn');
+        // 自定义模型选择组件
+        const modelSelectTrigger = document.getElementById('modelSelectTrigger');
+        const selectedModelName = document.getElementById('selectedModelName');
+        const modelDropdownPanel = document.getElementById('modelDropdownPanel');
+        const modelDropdownArrow = document.getElementById('modelDropdownArrow');
+        let currentModel = '360gpt-pro'; // 默认选中360问AI
+// 从本地存储读取上次选择的模型，自动恢复
+const savedModelValue = localStorage.getItem('selected_model_value');
+const savedModelName = localStorage.getItem('selected_model_name');
+if (savedModelValue && savedModelName) {
+    currentModel = savedModelValue;
+    // 等待DOM加载完成后更新界面显示
+    setTimeout(() => {
+        document.getElementById('selectedModelName').textContent = savedModelName;
+        // 更新选项选中状态
+        document.querySelectorAll('.model-option').forEach(opt => {
+            const check = opt.querySelector('.selected-check');
+            if (opt.dataset.value === savedModelValue) {
+                check.classList.remove('opacity-0');
+                check.classList.add('opacity-100');
+            } else {
+                check.classList.add('opacity-0');
+                check.classList.remove('opacity-100');
+            }
+        });
+    }, 100);
+}
+
+// ==================== AI API配置 ====================
+// 请在下方填入您自己的API密钥即可使用真实AI能力：
+// - 通义千问API密钥申请地址：https://dashscope.console.aliyun.com/apiKey
+// - DeepSeek API密钥申请地址：https://platform.deepseek.com/api_keys
+const API_CONFIG = {
+    '360gpt-pro': {
+        endpoint: 'https://api.zhineng.360.cn/v1/chat/completions',
+        apiKey: localStorage.getItem('360_key') || '', // 自动读取本地存储的360AI密钥
+        model: '360gpt-pro',
+        name: '360智脑 Pro',
+        desc: '360智脑是360自研的开源大语言模型，支持多轮对话、内容创作、信息查询、代码生成、长文本处理等能力，中文能力表现优异，新用户注册有免费额度。'
+    },
+    'qwen2-7b': {
+        endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        apiKey: localStorage.getItem('qwen_api_key') || '', // 自动读取本地存储的通义千问密钥
+        model: 'qwen2-7b-instruct',
+        name: '通义千问2',
+        desc: '通义千问是阿里云开源的大语言模型，支持多轮对话、内容创作、信息查询、代码生成等多种能力。'
+    },
+    'deepseek-7b': {
+        endpoint: 'https://api.deepseek.com/v1/chat/completions',
+        apiKey: localStorage.getItem('deepseek_api_key') || '', // 自动读取本地存储的DeepSeek密钥
+        model: 'deepseek-chat',
+        name: '深度求索',
+        desc: 'DeepSeek是深度求索开源的大语言模型，擅长逻辑推理、代码编写、数学计算和复杂问题解决。'
+    }
+};
+// ===================================================
+        const chatHistory = document.getElementById('chatHistory');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const messagesList = document.getElementById('messagesList');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const uploadPreview = document.getElementById('uploadPreview');
+        const fileList = document.getElementById('fileList');
+        const dropOverlay = document.getElementById('dropOverlay');
+        const quickPrompts = document.querySelectorAll('.quick-prompt');
+
+        // 模型下拉交互
+function toggleModelDropdown(show) {
+    const panel = document.getElementById('modelDropdownPanel');
+    const arrow = document.getElementById('modelDropdownArrow');
+    if (show === undefined) show = panel.classList.contains('hidden');
+    if (show) {
+        panel.classList.remove('hidden');
+        setTimeout(() => {
+            panel.classList.remove('scale-95', 'opacity-0');
+            arrow.classList.add('rotate-180');
+        }, 10);
+    } else {
+        panel.classList.add('scale-95', 'opacity-0');
+        arrow.classList.remove('rotate-180');
+        setTimeout(() => panel.classList.add('hidden'), 200);
+    }
+}
+
+document.getElementById('modelSelectTrigger').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleModelDropdown();
+});
+
+document.querySelectorAll('.model-option').forEach(option => {
+    option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        const name = option.querySelector('span').textContent;
+        currentModel = value;
+        document.getElementById('selectedModelName').textContent = name;
+        // 更新选中状态
+        document.querySelectorAll('.model-option').forEach(opt => {
+            opt.querySelector('.selected-check').classList.add('opacity-0');
+            opt.querySelector('.selected-check').classList.remove('opacity-100');
+        });
+        option.querySelector('.selected-check').classList.remove('opacity-0');
+        option.querySelector('.selected-check').classList.add('opacity-100');
+        toggleModelDropdown(false);
+        // 如果在对话中，切换模型提示
+        if (messages.length > 0) {
+            addMessage('system', `已切换为${name}模型`);
+        }
+    });
+});
+
+// 初始化
+
+        function init() {
+            loadConversations();
+            // 自动过滤无消息的空白对话
+            conversations = conversations.filter(conv => conv.messages.length > 0);
+            if (conversations.length === 0) {
+                createNewConversation(false);
+            } else {
+                loadConversation(conversations[0].id);
+            }
+            renderChatHistory();
+            bindEvents();
+        }
+
+        // 加载本地存储对话
+        function loadConversations() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    conversations = JSON.parse(saved);
+                } catch (e) {
+                    conversations = [];
+                }
+            }
+        }
+
+        // 保存对话到本地存储（自动过滤空白对话）
+        function saveConversations() {
+            const validConversations = conversations.filter(conv => conv.messages.length > 0);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(validConversations));
+            conversations = validConversations;
+            renderChatHistory();
+        }
+
+        // 创建新对话
+        function createNewConversation(shouldSave = true) {
+            // 判断：如果当前已经是空白对话，不重复创建
+            const currentConv = getCurrentConversation();
+            if (currentConv && currentConv.messages.length === 0 && uploadedFiles.length === 0) {
+                messageInput.focus();
+                return currentConv.id;
+            }
+
+            const newConv = {
+                id: Date.now().toString(),
+                title: '新对话',
+                model: currentModel,
+                messages: [],
+                createdAt: Date.now()
+            };
+            conversations.unshift(newConv);
+            currentConversationId = newConv.id;
+            uploadedFiles = [];
+            renderUploadPreview();
+            renderMessages();
+            renderChatHistory();
+            messageInput.value = '';
+            autoResize(messageInput);
+            updateSendButtonState();
+            messageInput.focus();
+            
+            // 空白对话不立即保存，发送第一条消息后才会持久化
+            if (shouldSave && newConv.messages.length > 0) {
+                saveConversations();
+            }
+            return newConv.id;
+        }
+
+        // 获取当前对话
+        function getCurrentConversation() {
+            return conversations.find(conv => conv.id === currentConversationId);
+        }
+
+        // 加载指定对话
+        function loadConversation(convId) {
+            const conv = conversations.find(c => c.id === convId);
+            if (!conv) return;
+            currentConversationId = convId;
+            currentModel = conv.model;
+            uploadedFiles = [];
+            renderUploadPreview();
+            renderMessages();
+            renderChatHistory();
+            messageInput.value = '';
+            autoResize(messageInput);
+            updateSendButtonState();
+            messageInput.focus();
+        }
+
+        // 删除对话
+        function deleteConversation(convId, e) {
+            e.stopPropagation();
+            conversations = conversations.filter(c => c.id !== convId);
+            if (convId === currentConversationId) {
+                if (conversations.length > 0) {
+                    loadConversation(conversations[0].id);
+                } else {
+                    createNewConversation(false);
+                }
+            }
+            saveConversations();
+        }
+
+        // 渲染历史记录
+        function renderChatHistory() {
+            chatHistory.innerHTML = '';
+            conversations.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = `hover-delete group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${conv.id === currentConversationId ? 'bg-primary/10 text-primary' : 'hover:bg-secondary text-gray-dark'}`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i class="fa fa-comment-o ${conv.id === currentConversationId ? 'text-primary' : 'text-gray-medium'} shrink-0"></i>
+                        <span class="truncate text-sm">${conv.title}</span>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-dark mb-1.5">360问AI API密钥</label>
+                        <input type="password" id="qhn360Key" class="w-full px-3 py-2 border border-gray-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="输入360AI开放平台密钥">
+                        <p class="text-xs text-gray-medium mt-1">申请地址：<a href="https://ai.360.cn/open/zh" target="_blank" class="text-primary hover:underline">360智脑开放平台</a>，新用户注册有免费额度</p>
+                    </div>
+    
+                    <button class="delete-btn text-gray-medium hover:text-red-500 p-1" title="删除对话">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                item.addEventListener('click', () => loadConversation(conv.id));
+                item.querySelector('.delete-btn').addEventListener('click', (e) => deleteConversation(conv.id, e));
+                chatHistory.appendChild(item);
+            });
+        }
+
+        // 渲染消息
+        function renderMessages() {
+            const conv = getCurrentConversation();
+            if (!conv || conv.messages.length === 0) {
+                welcomeScreen.classList.remove('hidden');
+                messagesList.classList.add('hidden');
+                messagesList.innerHTML = '';
+                return;
+            }
+            welcomeScreen.classList.add('hidden');
+            messagesList.classList.remove('hidden');
+            messagesList.innerHTML = '';
+
+            conv.messages.forEach(msg => {
+                const msgEl = document.createElement('div');
+                msgEl.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`;
+                
+                const bubbleEl = document.createElement('div');
+                bubbleEl.className = `max-w-[80%] rounded-2xl px-4 py-3 ${
+                    msg.role === 'user' 
+                        ? 'bg-primary text-white rounded-tr-sm' 
+                        : 'bg-secondary text-dark rounded-tl-sm'
+                }`;
+
+                // 消息内容
+                const contentEl = document.createElement('div');
+                contentEl.className = 'whitespace-pre-wrap break-words text-sm leading-relaxed';
+                contentEl.textContent = msg.content;
+                bubbleEl.appendChild(contentEl);
+
+                // 如果有附件
+                if (msg.files && msg.files.length > 0) {
+                    const filesEl = document.createElement('div');
+                    filesEl.className = 'mt-2 flex flex-wrap gap-2';
+                    msg.files.forEach(file => {
+                        const fileTag = document.createElement('div');
+                        fileTag.className = `${msg.role === 'user' ? 'bg-white/20' : 'bg-white'} px-2 py-1 rounded-lg text-xs flex items-center gap-1`;
+                        fileTag.innerHTML = `<i class="fa fa-file-o"></i> ${file.name} (${formatFileSize(file.size)})`;
+                        filesEl.appendChild(fileTag);
+                    });
+                    bubbleEl.appendChild(filesEl);
+                }
+
+                // 如果有下载按钮
+                if (msg.downloadFile) {
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = `mt-3 ${msg.role === 'user' ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-white hover:bg-gray-50 text-primary'} px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors`;
+                    downloadBtn.innerHTML = `<i class="fa fa-download"></i> 下载修改后的文件`;
+                    downloadBtn.addEventListener('click', () => downloadFile(msg.downloadFile));
+                    bubbleEl.appendChild(downloadBtn);
+                }
+
+                msgEl.appendChild(bubbleEl);
+                messagesList.appendChild(msgEl);
+            });
+
+            // 滚动到底部
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 发送消息
+        
+        // 追加消息到界面
+        function appendMessage(role, content, files = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} mb-4`;
+
+            const avatar = role === 'user' 
+                ? '<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium flex-shrink-0">你</div>'
+                : '<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-primary flex-shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></div>';
+
+            let contentHtml = `<p class="text-sm leading-relaxed whitespace-pre-wrap">${content}</p>`;
+
+            // 添加文件预览
+            if (files.length > 0) {
+                contentHtml += '<div class="flex flex-wrap gap-2 mt-2">';
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        contentHtml += `<img src="${file.preview}" class="w-24 h-24 object-cover rounded-lg border border-gray-light" alt="上传图片">`;
+                    } else {
+                        contentHtml += `<div class="px-3 py-2 bg-secondary rounded-lg flex items-center gap-2 text-xs text-gray-dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${file.name}</div>`;
+                    }
+                });
+                contentHtml += '</div>';
+            }
+
+            const bubble = role === 'user'
+                ? `<div class="max-w-[80%] bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3">${contentHtml}</div>`
+                : `<div class="max-w-[80%] bg-white rounded-2xl rounded-tl-sm px-4 py-3 border border-gray-light shadow-sm">${contentHtml}</div>`;
+
+            messageDiv.innerHTML = `${role === 'assistant' ? avatar : ''}${bubble}${role === 'user' ? avatar : ''}`;
+            messagesList.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            return messageDiv;
+        }
+function sendMessage() {
+            const content = messageInput.value.trim();
+            const conv = getCurrentConversation();
+            if (!conv) return;
+            if (!content && uploadedFiles.length === 0) return;
+
+            // 添加用户消息
+            const userMsg = {
+                role: 'user',
+                content: content || '上传了文件',
+                files: [...uploadedFiles],
+                timestamp: Date.now()
+            };
+            conv.messages.push(userMsg);
+
+            // 更新对话标题（第一条消息时自动命名）
+            if (conv.messages.length === 1 && content) {
+                conv.title = content.substring(0, 20) + (content.length > 20 ? '...' : '');
+            }
+
+            // 清空输入
+            messageInput.value = '';
+            autoResize(messageInput);
+            uploadedFiles = [];
+            renderUploadPreview();
+            updateSendButtonState();
+            renderMessages();
+
+            // 生成AI回复
+            setTimeout(async () => {
+                // 获取当前历史消息（排除刚添加的用户消息）
+                const historyMessages = conv.messages.slice(0, -1);
+                // 等待异步回复结果
+                let aiContent = await generateAIResponse(content, userMsg.files, historyMessages);
+
+                const aiMsg = {
+                    role: 'assistant',
+                    content: aiContent,
+                    timestamp: Date.now(),
+                    downloadFile: userMsg.files.length > 0 ? {
+                        name: `修改后的_${userMsg.files[0].name}`,
+                        content: '示例文件内容，对接模型API后将返回真实处理后的文件'
+                    } : null
+                };
+                conv.messages.push(aiMsg);
+                saveConversations();
+                renderMessages();
+            }, 800);
+
+            saveConversations();
+        }
+
+        // 调用真实AI API生成回复
+        async function generateAIResponse(content, files, historyMessages) {
+            // 文件处理部分保留原有逻辑（可后续对接文档处理API）
+            if (files.length > 0) {
+                return `已成功接收您上传的 ${files.length} 个文件：\n${files.map(f => `- ${f.name} (${formatFileSize(f.size)})`).join('\n')}\n\n我已完成文件分析和处理，点击下方按钮即可下载修改后的文件。`;
+            }
+
+            if (!content.trim()) return '';
+
+            const config = API_CONFIG[currentModel];
+            if (!config.apiKey) {
+                const modelName = config.name;
+                const modelDesc = config.desc;
+                return `你好，我是${modelName}。关于「${content}」的问题：
+${modelDesc}
+
+💡 小提示：当前为本地演示模式，如需使用联网真实AI能力，点击左下角齿轮图标打开设置，填入对应平台的API密钥即可，新用户注册均有免费额度可使用。`;
+            }
+
+            try {
+                // 构建消息列表（系统提示 + 历史对话 + 当前问题）
+                const messages = [
+                    {role: 'system', content: '你是由开源大模型驱动的AI助手，回答准确、简洁、有帮助，使用中文回复。'}
+                ];
+                // 添加历史对话
+                historyMessages.forEach(msg => {
+                    messages.push({
+                        role: msg.role === 'user' ? 'user' : 'assistant',
+                        content: msg.content
+                    });
+                });
+                // 添加当前用户问题
+                messages.push({role: 'user', content: content});
+
+                // 调用API
+                const response = await fetch(config.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${config.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: config.model,
+                        messages: messages,
+                        temperature: 0.7,
+                        max_tokens: 2048
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || `请求失败，状态码：${response.status}`);
+                }
+
+                const result = await response.json();
+                return result.choices[0].message.content.trim();
+
+            } catch (error) {
+                console.error('AI请求错误：', error);
+                let errorMsg = `❌ 请求失败：${error.message}`;
+                if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+                    errorMsg += '\n\n💡 解决方法：\n1. 检查API密钥是否正确\n2. 本地测试可使用浏览器跨域插件或配置后端代理\n3. 确认网络可以访问对应API服务';
+                }
+                return errorMsg;
+            }
+        }
+
+        // 文件上传处理
+        function handleFileUpload(files) {
+            const validFiles = Array.from(files).filter(file => {
+                // 过滤GIF动图
+                if (file.type === 'image/gif') {
+                    alert('不支持GIF动态图片格式');
+                    return false;
+                }
+                return true;
+            });
+            uploadedFiles = [...uploadedFiles, ...validFiles.map(f => ({
+                name: f.name,
+                size: f.size,
+                type: f.type,
+                raw: f
+            }))];
+            renderUploadPreview();
+            updateSendButtonState();
+        }
+
+        // 渲染上传文件预览
+        function renderUploadPreview() {
+            if (uploadedFiles.length === 0) {
+                uploadPreview.classList.add('hidden');
+                fileList.innerHTML = '';
+                return;
+            }
+            uploadPreview.classList.remove('hidden');
+            fileList.innerHTML = '';
+            uploadedFiles.forEach((file, index) => {
+                const fileTag = document.createElement('div');
+                fileTag.className = 'bg-secondary rounded-lg px-3 py-2 flex items-center gap-2 text-sm';
+                fileTag.innerHTML = `
+                    <i class="fa fa-file-o text-primary"></i>
+                    <span class="max-w-[200px] truncate">${file.name}</span>
+                    <span class="text-gray-medium text-xs">${formatFileSize(file.size)}</span>
+                    <button class="text-gray-medium hover:text-red-500 ml-1" data-index="${index}">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                fileTag.querySelector('button').addEventListener('click', (e) => {
+                    uploadedFiles.splice(index, 1);
+                    renderUploadPreview();
+                    updateSendButtonState();
+                });
+                fileList.appendChild(fileTag);
+            });
+        }
+
+        // 下载文件（示例，实际返回API处理后的真实文件）
+        function downloadFile(fileInfo) {
+            const blob = new Blob([fileInfo.content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileInfo.name;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // 自动调整输入框高度
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+            updateSendButtonState();
+        }
+
+        // 更新发送按钮状态
+        function updateSendButtonState() {
+            const hasContent = messageInput.value.trim().length > 0 || uploadedFiles.length > 0;
+            sendBtn.disabled = !hasContent;
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // ========== 模型下拉交互 ==========
+            const modelSelectTrigger = document.getElementById('modelSelectTrigger');
+            const modelDropdownPanel = document.getElementById('modelDropdownPanel');
+            const modelDropdownArrow = document.getElementById('modelDropdownArrow');
+            const selectedModelName = document.getElementById('selectedModelName');
+
+            function toggleModelDropdown(show) {
+                if (show === undefined) show = modelDropdownPanel.classList.contains('hidden');
+                if (show) {
+                    modelDropdownPanel.classList.remove('hidden');
+                    setTimeout(() => {
+                        modelDropdownPanel.classList.remove('scale-95', 'opacity-0');
+                        modelDropdownPanel.classList.add('scale-100', 'opacity-100');
+                        modelDropdownArrow.style.transform = 'rotate(180deg)';
+                    }, 10);
+                } else {
+                    modelDropdownPanel.classList.add('scale-95', 'opacity-0');
+                    modelDropdownPanel.classList.remove('scale-100', 'opacity-100');
+                    modelDropdownArrow.style.transform = 'rotate(0deg)';
+                    setTimeout(() => modelDropdownPanel.classList.add('hidden'), 200);
+                }
+            }
+
+            modelSelectTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleModelDropdown();
+        // 保存选择的模型到本地存储，下次打开自动恢复
+        localStorage.setItem('selected_model_value', value);
+        localStorage.setItem('selected_model_name', name);
+            });
+
+            document.addEventListener('click', () => toggleModelDropdown(false));
+            modelDropdownPanel.addEventListener('click', (e) => e.stopPropagation());
+
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const modelValue = option.dataset.value;
+                    const modelName = option.querySelector('span').textContent;
+                    currentModel = modelValue;
+                    selectedModelName.textContent = modelName;
+
+                    document.querySelectorAll('.model-option').forEach(opt => {
+                        const check = opt.querySelector('.selected-check');
+                        if (opt.dataset.value === modelValue) {
+                            check.classList.remove('opacity-0');
+                            check.classList.add('opacity-100');
+                        } else {
+                            check.classList.add('opacity-0');
+                            check.classList.remove('opacity-100');
+                        }
+                    });
+
+                    const conv = getCurrentConversation();
+                    if (conv) {
+                        conv.model = currentModel;
+                        saveConversations();
+                    }
+                    toggleModelDropdown(false);
+                });
+            });
+            // ========== 模型下拉交互结束 ==========
+    
+            // 新对话按钮
+            newChatBtn.addEventListener('click', () => createNewConversation());
+
+
+
+            // 上传按钮
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                handleFileUpload(e.target.files);
+                fileInput.value = '';
+            });
+
+            // 发送按钮
+            sendBtn.addEventListener('click', sendMessage);
+
+            // 输入框回车发送
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            messageInput.addEventListener('input', () => updateSendButtonState());
+
+            // 拖拽上传
+            document.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropOverlay.classList.remove('hidden');
+                dropOverlay.classList.add('flex');
+            });
+            document.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                if (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+                    dropOverlay.classList.add('hidden');
+                    dropOverlay.classList.remove('flex');
+                }
+            });
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropOverlay.classList.add('hidden');
+                dropOverlay.classList.remove('flex');
+                handleFileUpload(e.dataTransfer.files);
+            });
+
+            // 快捷提示
+            quickPrompts.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    messageInput.value = btn.textContent.trim();
+                    updateSendButtonState();
+                    messageInput.focus();
+                });
+            });
+
+            // 模型选择下拉逻辑
+            // 触发按钮点击：展开/收起下拉
+            modelSelectTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = !modelDropdownPanel.classList.contains('hidden');
+                if (isOpen) {
+                    // 收起
+                    modelDropdownPanel.classList.add('hidden');
+                    modelDropdownPanel.classList.add('scale-95', 'opacity-0');
+                    modelDropdownPanel.classList.remove('scale-100', 'opacity-100');
+                    modelDropdownArrow.style.transform = 'rotate(0deg)';
+                } else {
+                    // 展开
+                    modelDropdownPanel.classList.remove('hidden');
+                    setTimeout(() => {
+                        modelDropdownPanel.classList.remove('scale-95', 'opacity-0');
+                        modelDropdownPanel.classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                    modelDropdownArrow.style.transform = 'rotate(180deg)';
+                }
+            });
+
+            // 点击页面其他区域收起下拉
+            document.addEventListener('click', () => {
+                modelDropdownPanel.classList.add('hidden');
+                modelDropdownPanel.classList.add('scale-95', 'opacity-0');
+                modelDropdownPanel.classList.remove('scale-100', 'opacity-100');
+                modelDropdownArrow.style.transform = 'rotate(0deg)';
+            });
+
+            // 阻止点击下拉面板内部时冒泡关闭
+            modelDropdownPanel.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            // 模型选项点击事件
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const modelValue = option.dataset.value;
+                    const modelName = option.querySelector('span').textContent;
+
+                    // 更新当前选中模型
+                    currentModel = modelValue;
+                    selectedModelName.textContent = modelName;
+
+                    // 更新所有选项的对勾状态
+                    document.querySelectorAll('.model-option').forEach(opt => {
+                        const checkIcon = opt.querySelector('.fa-check');
+                        if (opt.dataset.value === modelValue) {
+                            checkIcon.classList.remove('opacity-0');
+                            checkIcon.classList.add('opacity-100');
+                        } else {
+                            checkIcon.classList.add('opacity-0');
+                            checkIcon.classList.remove('opacity-100');
+                        }
+                    });
+
+                    // 更新当前对话的模型属性
+                    const conv = getCurrentConversation();
+                    if (conv) {
+                        conv.model = currentModel;
+                        saveConversations();
+                    }
+
+                    // 收起下拉
+                    modelDropdownPanel.classList.add('hidden');
+                    modelDropdownPanel.classList.add('scale-95', 'opacity-0');
+                    modelDropdownPanel.classList.remove('scale-100', 'opacity-100');
+                    modelDropdownArrow.style.transform = 'rotate(0deg)';
+                });
+            });
+        }
+
+        // 启动应用
+        
+    
+        // 确保DOM完全加载后再初始化应用
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init(); // DOM已经加载完成直接初始化
+        }
+
+// ========== API密钥自动配置逻辑 ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // 自动加载本地存储的API密钥
+  const savedQwenKey = localStorage.getItem('qwen_api_key') || '';
+  const savedDeepseekKey = localStorage.getItem('deepseek_api_key') || '';
+
+  // 更新全局API配置
+  if (typeof API_CONFIG !== 'undefined') {
+    API_CONFIG.qwen = savedQwenKey;
+    API_CONFIG.deepseek = savedDeepseekKey;
+  }
+
+  // 获取DOM元素
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  const apiSettingsModal = document.getElementById('apiSettingsModal');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const qwenApiKeyInput = document.getElementById('qwenApiKeyInput');
+  const deepseekApiKeyInput = document.getElementById('deepseekApiKeyInput');
+
+  // 填充已保存的密钥到输入框
+  if (qwenApiKeyInput) qwenApiKeyInput.value = savedQwenKey;
+  if (deepseekApiKeyInput) deepseekApiKeyInput.value = savedDeepseekKey;
+
+  // 模态框开关逻辑
+  if (apiSettingsBtn && apiSettingsModal) {
+    apiSettingsBtn.addEventListener('click', () => {
+      apiSettingsModal.classList.remove('hidden');
+      apiSettingsModal.classList.add('flex');
+    });
+  }
+  if (closeSettingsBtn && apiSettingsModal) {
+    closeSettingsBtn.addEventListener('click', () => {
+      apiSettingsModal.classList.add('hidden');
+      apiSettingsModal.classList.remove('flex');
+    });
+  }
+  if (apiSettingsModal) {
+    apiSettingsModal.addEventListener('click', (e) => {
+      if (e.target === apiSettingsModal) {
+        apiSettingsModal.classList.add('hidden');
+        apiSettingsModal.classList.remove('flex');
+      }
+    });
+  }
+
+  // 实时保存密钥到本地存储
+  if (qwenApiKeyInput) {
+    qwenApiKeyInput.addEventListener('input', () => {
+      const key = qwenApiKeyInput.value.trim();
+      if (typeof API_CONFIG !== 'undefined') API_CONFIG.qwen = key;
+      localStorage.setItem('qwen_api_key', key);
+    });
+  }
+  if (deepseekApiKeyInput) {
+    deepseekApiKeyInput.addEventListener('input', () => {
+      const key = deepseekApiKeyInput.value.trim();
+      if (typeof API_CONFIG !== 'undefined') API_CONFIG.deepseek = key;
+      localStorage.setItem('deepseek_api_key', key);
+    });
+  }
+});
+
+</script>
+
+<!-- API配置模态框 -->
+<div id="apiSettingsModal" class="fixed inset-0 bg-black/50 z-[100000] hidden items-center justify-center">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 mx-4">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-dark">API密钥配置</h3>
+      <button id="closeSettingsBtn" class="text-gray-medium hover:text-gray-dark transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p class="text-sm text-gray-medium mb-4">配置后可调用真实AI能力，密钥仅保存在您的浏览器本地，不会上传到任何服务器</p>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-dark mb-1">通义千问API密钥</label>
+        <input type="password" id="qwenApiKeyInput" placeholder="请输入通义千问API密钥" class="w-full px-3 py-2 border border-gray-light rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+        <a href="https://dashscope.console.aliyun.com/apiKey" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 inline-block">点击申请通义千问API密钥（新用户有免费额度）</a>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-dark mb-1">DeepSeek API密钥</label>
+        <input type="password" id="deepseekApiKeyInput" placeholder="请输入DeepSeek API密钥" class="w-full px-3 py-2 border border-gray-light rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+        <a href="https://platform.deepseek.com/api_keys" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 inline-block">点击申请DeepSeek API密钥（注册即送免费额度）</a>
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-gray-light text-xs text-gray-medium flex items-center justify-center gap-1">
+      未配置密钥时将使用演示模式，可正常体验界面所有交互功能
+    </div>
+  </div>
+</div>
+
+
+<script>
+// 页面初始化
+window.addEventListener('DOMContentLoaded', () => {
+    // 自动加载360API密钥
+    const saved360Key = localStorage.getItem('360_key') || '';
+    setTimeout(() => {
+        const input360 = document.getElementById('qhn360Key');
+        if (input360) input360.value = saved360Key;
+    }, 100);
+
+    init();
+});
+
+// 确保DOM完全加载后再初始化应用
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+
+            
+
+        } else {
+            init(); // DOM已经加载完成直接初始化
+        }
+
+// ========== API密钥自动配置逻辑 ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // 自动加载本地存储的API密钥
+  const savedQwenKey = localStorage.getItem('qwen_api_key') || '';
+  const savedDeepseekKey = localStorage.getItem('deepseek_api_key') || '';
+
+  // 更新全局API配置
+  if (typeof API_CONFIG !== 'undefined') {
+    API_CONFIG.qwen = savedQwenKey;
+    API_CONFIG.deepseek = savedDeepseekKey;
+  }
+
+  // 获取DOM元素
+  const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+  const apiSettingsModal = document.getElementById('apiSettingsModal');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const qwenApiKeyInput = document.getElementById('qwenApiKeyInput');
+  const deepseekApiKeyInput = document.getElementById('deepseekApiKeyInput');
+
+  // 填充已保存的密钥到输入框
+  if (qwenApiKeyInput) qwenApiKeyInput.value = savedQwenKey;
+  if (deepseekApiKeyInput) deepseekApiKeyInput.value = savedDeepseekKey;
+
+  // 模态框开关逻辑
+  if (apiSettingsBtn && apiSettingsModal) {
+    apiSettingsBtn.addEventListener('click', () => {
+      apiSettingsModal.classList.remove('hidden');
+      apiSettingsModal.classList.add('flex');
+    });
+  }
+  if (closeSettingsBtn && apiSettingsModal) {
+    closeSettingsBtn.addEventListener('click', () => {
+      apiSettingsModal.classList.add('hidden');
+      apiSettingsModal.classList.remove('flex');
+    });
+  }
+  if (apiSettingsModal) {
+    apiSettingsModal.addEventListener('click', (e) => {
+      if (e.target === apiSettingsModal) {
+        apiSettingsModal.classList.add('hidden');
+        apiSettingsModal.classList.remove('flex');
+      }
+    });
+  }
+
+  // 实时保存密钥到本地存储
+  if (qwenApiKeyInput) {
+    qwenApiKeyInput.addEventListener('input', () => {
+      const key = qwenApiKeyInput.value.trim();
+      if (typeof API_CONFIG !== 'undefined') API_CONFIG.qwen = key;
+      localStorage.setItem('qwen_api_key', key);
+    });
+  }
+  if (deepseekApiKeyInput) {
+    deepseekApiKeyInput.addEventListener('input', () => {
+      const key = deepseekApiKeyInput.value.trim();
+      if (typeof API_CONFIG !== 'undefined') API_CONFIG.deepseek = key;
+      localStorage.setItem('deepseek_api_key', key);
+    });
+  }
+});
+
+// 实时保存360API密钥
+setTimeout(() => {
+    const input360 = document.getElementById('qhn360Key');
+    if (input360) {
+        input360.addEventListener('input', () => {
+            localStorage.setItem('360_key', input360.value.trim());
+        });
+    }
+    // 保存按钮点击时也保存
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (input360) localStorage.setItem('360_key', input360.value.trim());
+        });
+    }
+}, 200);
+</script>
+
+<!-- 左下角开源提示与设置按钮 -->
+<div class="fixed bottom-4 left-4 flex items-center gap-2 text-xs text-gray-medium z-50">
+    <span>开源AI支持，仅学习</span>
+    <button id="apiSettingsBtn" class="text-gray-medium hover:text-primary transition-colors cursor-pointer" title="API密钥设置">
+        <i class="fa fa-cog text-base"></i>
+    </button>
+</div>
+
+</body>
+</html>
